@@ -1,12 +1,4 @@
 #!/bin/bash
-#
-# https://github.com/Aniverse/inexistence
-# Author: Aniverse
-#
-# script_update=2020.09.15
-# script_version=r12031
-# This var will recover other script's var when source
-################################################################################################ Usage Guide
 
 usage_guide() {
 s=/etc/inexistence/00.Installation/check-sys;rm -f $s ; nano $s
@@ -19,7 +11,7 @@ else
 fi
 }
 
-################################################################################################ OS Check
+###################################################################################
 
 get_opsy() {
     # Fedora, CentOS
@@ -584,7 +576,6 @@ function redact_ip() {
 }
 
 ipv4_check() {
-    echo -e "${bold}Checking your server's public IPv4 address ...${normal}"
     # serveripv4=$( ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1' )
     # serveripv4=$( ifconfig -a|grep inet|grep -v 127.0.0.1|grep -v inet6|awk '{print $2}'|tr -d "addr:" )
     # serveripv4=$( ip route get 8.8.8.8 | awk '{print $3}' )
@@ -599,7 +590,6 @@ ipv4_check() {
 }
 
 ipv6_check() {
-    echo -e "${bold}Checking your server's public IPv6 address ...${normal}"
     serveripv6=$( wget -t1 -T5 -qO- v6.ipv6-test.com/api/myip.php | grep -Eo "[0-9a-z:]+" | head -n1 )
     # serveripv6=$( wget --no-check-certificate -qO- -t1 -T8 ipv6.icanhazip.com )
     # serverlocalipv6=$( ip addr show dev $interface | sed -e's/^.*inet6 \([^ ]*\)\/.*$/\1/;t;d' | grep -v fe80 | head -n1 )
@@ -655,7 +645,6 @@ ip_ipinfo() {
 
 
 seedbox_neighbors_check() {
-    echo -e "${bold}正在检查盒子的邻居情况 ...${normal}"
     cd $HOME
     current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//")  # 下边我写重复，其实主要目的是为了在注释里写一下各种共享盒子的路径是什么样子的格式
     [[ $Seedbox == USB    ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home11     这样子的
@@ -701,8 +690,7 @@ seedbox_check() {
     echo $serverfqdn | grep -q ultraseedbox   && Seedbox=USB ; echo $serverfqdn | grep -qi usb && Seedbox=USB
     echo $serverfqdn | grep -q appbox         && Seedbox=AppBox && Docker=1
     echo $serverfqdn | grep -q seedboxes.cc   && Seedbox=Sbcc   && Docker=1
-    # 2020.04.11 FH SSD 作特殊处理的原因是，大概 19 年开始 FH SSD 严格限制硬盘占用，每个用户都会在 df -h 下边有独立的空间显示，这就导致脚本计算硬盘大小的时候容量是实际的 2 倍左右
-    # 不过我是很久没买过了，不知道现在是不是还是这样
+
     [[ $Seedbox == FH ]] && df -hPl | grep -q "/media/md" && FH_SSD=1
     [[ $debug == 1 ]] && echo -e "Seedbox=$Seedbox  FH_SSD=$FH_SSD"
 
@@ -751,7 +739,7 @@ dd_benchmark()   {
 install_speedtest_cli_offical() {
     if  ! has_cmd speedtest ; then
         wget --no-check-certificate -T10 -qO speedtest.tgz https://cdn.jsdelivr.net/gh/oooldking/script@1.1.7/speedtest_cli/ookla-speedtest-1.0.0-$(uname -m)-linux.tgz
-        [ $? -ne 0 ] && echo -e "Error: Failed to download speedtest cli.\n" && exit 1
+        [ $? -ne 0 ] && exit 1
         if [[ $EUID == 0 ]]; then
             speedtest_cmd=/usr/local/bin/speedtest
         else
@@ -1007,36 +995,9 @@ check_release() {
 }
 
 deprecated_disk_check() {
-    # 其实这个判定对于独服可能不太对
-    # disk_par_num=$(df -lh | grep -P "/home[0-9]+|media|home|mnt" | wc -l)
     disk_par_num=$(cat $HOME/par_list | wc -l)
-    # 这个估计没毛病，Docker、独服、KVM 下都没问题的样子，别的不知道
-    # disk_par_num=$(lsblk --nodeps --noheadings --output NAME,SIZE,ROTA --exclude 1,2,11 2>&1 | wc -l)
-
-    # / 为最大分区时，数字 +1
     [[ $(df -lh | grep $(df -k | sort -rn -k4 | awk '{print $1}' | head -1) | awk '{print $NF}') == / ]] && disk_par_num=$(expr $disk_par_num + 1)
 
-    # lsblk --exclude 1,2,11 --output NAME,SIZE,ROTA,TYPE,MOUNTPOINT,MODEL
-    # lsblk -dno MODEL 2>&1 | sort | uniq -c | sort -nr              | awk '{printf("共 %-2s 块 %s %s %s %s\n", $1, $2, $3, $4, $5)}'
-    # lsblk -dno MODEL 2>&1 | sort -u
-    # lsblk --nodeps --exclude 1,2,11 --output NAME,SIZE,ROTA,MODEL | awk '{if ($3 == 0) {$3=" SSD"} if ($3 == 1) {$3=" HDD"} ; printf("%-5s%7s%5s   %s %s %s %s\n", $1, $2, $3, $4, $5, $6, $7)}' | sed "s|ROTA|TYPE|" | awk 'NR==1 {print $0};NR!=1 {print $0 | "sort -n -k2"}'
-
-    # disk_size=$(lsblk --nodeps --noheadings --output SIZE 2>&1 | awk '{print $1}')
-    # disk_total_size=$( calc_disk ${disk_size[@]} )
-    # disk_used_size=$( du -sh $HOME 2>&1 | awk -F " " '{print $1}' | sed "s/G//" )
-
-    # 2020.02.28 lsblk／fdisk -l 计算硬盘空间的好处是，一些没格式化或者没挂载的硬盘也能算出来，但是还是容易出错
-    # 下边这个是各类 bench 脚本通用的，还是用这个算了，起码算错了也没什么大不了的，因为大家都错了……
-
-    # superbench
-    # disk_size1=($( LANG=C df -hPl | grep -wvE '\-|none|tmpfs|overlay|shm|udev|devtmpfs|by-uuid|chroot|Filesystem' | awk '{print $2}' ))
-    # bench.sh
-    # disk_size1=($( LANG=C df -hPl | grep -wvE '\-|none|tmpfs|devtmpfs|by-uuid|chroot|Filesystem|udev|docker' | awk '{print $2}' ))
-
-    # nvme list | grep /dev/nvme$i | sed "s/\b \b/_/g" | awk '{print $3}' | sed "s/_/ /g"
-    # udevadm info --name=/dev/nvme${i}n1 | grep "disk/by-id/nvme-" | head -1 | sed "s|S: disk/by-id/nvme-||" | awk -F '_' '{print $1,$2}'
-    # nvme_model=$(nvme list | grep /dev/nvme$i | sed "s/\b \b/_/g" | awk '{print $3}' | sed "s/_/ /g")
-    # nvme_model="$(smartctl -a /dev/nvme${i}n1 | grep "Model Number:" | cut -d ":" -f 2 | sed -e 's/^[ \t]*//')"
 }
 
 deprecated_interface_check() {
@@ -1070,7 +1031,6 @@ disk_check_dn_ver() {
 
 # This function doesn't work anymore
 ip_ipip() {
-    echo -e "${bold}正在检查服务器的其他 IP 信息 ... (可能要很久)${normal}"
     ipip_result=$HOME/ipip_result
     wget --no-check-certificate -qO- https://www.ipip.net/ip.html > $ipip_result 2>&1
     ipip_IP=$(   cat $ipip_result | grep -A3 IP     | grep -oE "[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+" | head -1 )
@@ -1081,24 +1041,17 @@ ip_ipip() {
     ipip_Loc=$(  cat $ipip_result | grep -A10 "https://tools.ipip.net/traceroute.php?ip=" | grep 720px | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
     ipip_ISP=$(  cat $ipip_result | grep "display: inline-block;text-align: center;width: 720px;float: left;line-height: 46px" | sed -n '2p' | grep -oE ">.*<" | sed "s/>//" | sed "s/<//" )
     rm -f $ipip_result
-    # echo -e  "  反向域名              ${green}$ipip_rDNS${jiacu}"
-    # echo -e  "  运营商                ${green}$ipip_ISP${jiacu}"
-    # echo -e  "  AS  信息              ${green}$asnnnnn, $isppppp${jiacu}"
-    # echo -e  "  地理位置              ${green}$ipip_Loc${jiacu}"
 }
 
 # Lack detail info
 ip_mix() {
-    echo -e "${bold}正在检查服务器的地理位置（可能不准） ...${normal}"
     result=$( wget -t1 -T10 -qO- http://freeapi.ipip.net/$serveripv4 )
     country=$( echo $result | awk -F '"' '{print $2}' )
     region=$( echo $result | awk -F '"' '{print $4}' )
     city=$( echo $result | awk -F '"' '{print $6}' )
     citydisplay=$( echo "$city, ")
     #isp=$( echo $result | awk -F '"' '{print $10}' )
-    echo -e "${bold}正在检查服务器的 ISP ...${normal}"
     isp=$( wget --no-check-certificate -t1 -T10 -qO- https://ipapi.co/json | grep \"org\" | awk -F '"' '{print $4}' )
-    echo -e "${bold}正在检查服务器的 ASN ...${normal}"
     asn=$(wget --no-check-certificate -t1 -T10 -qO- https://ipapi.co/asn/)
 }
 
