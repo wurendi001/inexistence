@@ -552,10 +552,10 @@ function isInternalIpAddress() { echo $1 | grep -qP '(192\.168\.((\d{1,2})|(1\d{
 function redact_ip() {
     case "$1" in
         *.*)
-            printf '%s.xxxx.xxxx\n' "$(printf '%s\n' "$1" | cut -d . -f 1-2)"
+            printf 'xxxx.xxxx.%s\n' "$(printf '%s\n' "$1" | cut -d . -f 3-4)"
             ;;
         *:*)
-            printf '%s:xxxx:xxxx\n' "$(printf '%s\n' "$1" | cut -d : -f 1-2)"
+            printf 'xxxx:xxxx:%s\n' "$(printf '%s\n' "$1" | cut -d : -f 3-4)"
             ;;
     esac
 }
