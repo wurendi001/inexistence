@@ -77,13 +77,9 @@ else
     displayOS="$DISTRO ($arch)"
 fi
 
-
-
 ################################################################################################
 ################################################################################################ System spec check
 ################################################################################################
-
-
 
 cname=$( awk -F: '/model name/ {name=$2} END {print name}' /proc/cpuinfo | sed 's/^[ \t]*//;s/[ \t]*$//' )
 
@@ -108,7 +104,6 @@ calc_disk() {
     echo ${total_size}
 }
 
-
 hardware_check_1() {
     # CPU
     cputhreads=$( grep 'processor' /proc/cpuinfo | sort -u | wc -l )
@@ -126,11 +121,9 @@ hardware_check_1() {
     disk_used_size=$( calc_disk "${disk_size2[@]}" )
     TOTAL_DISK=$(df -t simfs -t ext2 -t ext3 -t ext4 -t btrfs -t xfs -t vfat -t ntfs -t swap --total -h | grep total | awk '{ print $2 }')
 
-    # If SSD
     cat /sys/block/sd*/queue/rotational 2>/dev/null | grep -q 0 && SSD=yes
     cat /sys/block/vd*/queue/rotational 2>/dev/null | grep -q 0 && SSD=yes
 
-    # memory
     tram=$(  free -m | awk '/Mem/  {print $2}' )
     uram=$(  free -m | awk '/Mem/  {print $3}' )
     swap=$(  free -m | awk '/Swap/ {print $2}' )
@@ -150,9 +143,6 @@ hardware_check_1() {
     fi
 }
 
-
-
-
 check_tcp_acc() {
     tcp_control=$( cat /proc/sys/net/ipv4/tcp_congestion_control 2>&1 )
     tcp_control_all=$( cat /proc/sys/net/ipv4/tcp_available_congestion_control 2>&1 )
@@ -163,11 +153,9 @@ check_tcp_acc() {
     ps aux | grep -v grep | grep appex -q && tcp_c_name="锐速"
 }
 
-
 ################################################################################################
 ################################################################################################ Long
 ################################################################################################
-
 
 detectOs() {
     local DISTRIB_ID=
@@ -553,12 +541,9 @@ check_virt() {
 
 check_virt
 
-
 ################################################################################################
 ################################################################################################ IP-Related
 ################################################################################################
-
-
 
 function isValidIpAddress() { echo $1 | grep -qE '^[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?\.[0-9][0-9]?[0-9]?$' ; }
 function isInternalIpAddress() { echo $1 | grep -qP '(192\.168\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})$|(1\d{2})$|(2[0-4]\d)$|(25[0-5])$))|(172\.((1[6-9])|(2\d)|(3[0-1]))\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})$|(1\d{2})$|(2[0-4]\d)$|(25[0-5])$))|(10\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})|(1\d{2})|(2[0-4]\d)|(25[0-5]))\.((\d{1,2})$|(1\d{2})$|(2[0-4]\d)$|(25[0-5])$))' ; }
@@ -567,7 +552,7 @@ function isInternalIpAddress() { echo $1 | grep -qP '(192\.168\.((\d{1,2})|(1\d{
 function redact_ip() {
     case "$1" in
         *.*)
-            printf '%s.xxx.xxx\n' "$(printf '%s\n' "$1" | cut -d . -f 1-2)"
+            printf 'xxxx.%s.%s\n' "$(printf '%s\n' "$1" | cut -d . -f 1-2)"
             ;;
         *:*)
             printf '%s:xxxx:xxxx\n' "$(printf '%s\n' "$1" | cut -d : -f 1-2)"
@@ -621,9 +606,6 @@ ip_ipinfo_aniverse() {
     [[ -z $asnnnnn ]] && isp="No ASN detected"
 }
 
-# bench.sh
-# wget -q -T10 -O- ipinfo.io
-# wget -q -T10 -O- ipinfo.io/5.9.5.5/org
 ip_ipinfo() {
     local org="$(wget -q -T10 -O- ipinfo.io/org)"
     local city="$(wget -q -T10 -O- ipinfo.io/city)"
@@ -634,15 +616,9 @@ ip_ipinfo() {
     [[ -n "$region" ]] && echo " Region                : $(echo "$region")"
 }
 
-
-
-
 ################################################################################################
 ################################################################################################ Shared-Seedbox
 ################################################################################################
-
-
-
 
 seedbox_neighbors_check() {
     cd $HOME
@@ -655,10 +631,8 @@ seedbox_neighbors_check() {
     [[ $Seedbox == Sbcc   ]] && current_disk=$(echo $(pwd) | sed "s/\/$(whoami)//") # /home/user  这样子的
     [[ $Seedbox == AppBox ]] && [[ $(whoami) != root  ]] && current_disk=/home/$(whoami)
     [[ $Seedbox == AppBox ]] && [[ $(whoami) == root  ]] && current_disk=/root
-    # /media/sdr1/home 这样子的，一些老的 FH HDD 会出现这样的
     [[ $Seedbox == FH  ]] && echo $current_disk | grep -q "/home" && current_disk=$(echo $current_disk | sed "s/\/home//") && FH_HOME=1
 
-    # 所有邻居
     getent passwd | grep -Ev "$(whoami)|root" | grep -E "/bin/sh|/bin/bash" | grep -E "home|home[0-9]+|media" > $HOME/.abench/neighbors_all
 
     neighbors_all_num=$(cat $HOME/.abench/neighbors_all | wc -l)
@@ -701,14 +675,10 @@ seedbox_check() {
     fi
 }
 
-
 ################################################################################################
 ################################################################################################ IO Test
 ################################################################################################
 
-
-
-# https://github.com/n-st/nench
 Bps_to_MiBps()   { awk '{ printf "%.2f MiB/s\n", $0 / 1024 / 1024 } END { if (NR == 0) { print "error" } }' ; }
 Bps_to_MBps()    { awk '{ printf "%.0f MB/s\n", $0 / 1000 / 1000  } END { if (NR == 0) { print "error" } }' ; }
 Bps_to_MBps_1f() { awk '{ printf "%.1f MB/s\n", $0 / 1000 / 1000  } END { if (NR == 0) { print "error" } }' ; }
@@ -723,19 +693,10 @@ dd_benchmark()   {
     rm -f test_$$
 }
 
-
-
 ################################################################################################
 ################################################################################################ Network test
 ################################################################################################
-# https://install.speedtest.net/ooklaserver/ooklaserver.sh
 
-
-
-# These codes are from bench.sh
-################################################################################################
-
-# https://www.speedtest.net/apps/cli
 install_speedtest_cli_offical() {
     if  ! has_cmd speedtest ; then
         wget --no-check-certificate -T10 -qO speedtest.tgz https://cdn.jsdelivr.net/gh/oooldking/script@1.1.7/speedtest_cli/ookla-speedtest-1.0.0-$(uname -m)-linux.tgz
@@ -783,14 +744,11 @@ speedtest_teddysun() {
     speedtest_offical_cli_teddysun '15047' 'Tokyo      JP'
 }
 
-# install_speedtest_cli_offical && speedtest_teddysun && rm -fr speedtest-cli
 ################################################################################################
 
 ################################################################################################
 ################################################################################################ Disk check
 ################################################################################################
-
-
 
 function get_app_static () {
     local app=$1
@@ -832,8 +790,6 @@ function write_disk_info () {
     echo "$num text $power_on_hours $model" >> $HOME/.abench/disk.info
 }
 
-# smartctl -d test /dev/sg0
-# Origin code from https://github.com/dave-pl/hwcheck
 function disk_check_smart () {
     case "$raidcard" in
         NoRaid      )   disk=$(fdisk -l 2>/dev/null| grep -i dev |egrep -v "(/dev/[brm])"| awk '/:/ {print $2}'| cut -f 1 -d ":") ; d=0
@@ -884,17 +840,11 @@ function disk_check_smart () {
                                 power_on_hours=$(smartctl -a $i 2>&1 | grep -i "Power.On.Hours" | awk '{print $NF}' | sed "s|,||")
                                 model=$(smartctl -a $i | grep -i Model | sed "s/Model.*://" | awk '{print $1,$2,$3,$4}')
                                 write_disk_info
-                        #   if [[ $( nvme smart-log $i 2>&1 | grep power_on_hours ) ]]; then
-                        #       num="disk-$(expr $i + 1)"
-                        #       power_on_hours=$(nvme smart-log $i | grep power_on_hours | grep -oE "[0-9,]+" | sed "s/,//")
-                        #       model=$(nvme id-ctrl $i | grep -w mn | awk -F':' '{print $2,$3,$4}' | sed 's/^ //')
-                        #       write_disk_info
                             fi
                         done
                         ;;
     esac
 }
-
 
 function disk_check_raid () {
     [[ $debug == 1 ]] && lspci | grep -E "RAID|SCSI|SATA"
@@ -920,7 +870,6 @@ function disk_check_raid () {
     fi
     [[ $debug == 1 ]] && echo -e "raidcard=$raidcard" && cp -f  $HOME/.abench/disk.info  $HOME/disk-info-debug
 }
-
 
 function disk_check_no_root () {
     Raid=No
@@ -964,13 +913,9 @@ function disk_check_no_root () {
     [[ $debug == 1 ]] && echo -e "disk_model_2_num=$disk_model_2_num"
 }
 
-
-
 ################################################################################################
 ################################################################################################ deprecated
 ################################################################################################
-
-
 
 check_release() {
     if [ -f /etc/redhat-release ]; then
