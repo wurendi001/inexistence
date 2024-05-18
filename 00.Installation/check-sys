@@ -257,16 +257,12 @@ detectOs() {
         os=other
         os_long="$(uname -s)"
     fi
-
     os_long="${os_long:-$(uname -s)}"
 }
 
 
 detectOs
 
-
-# Modified, Origin see here: https://github.com/Tarcaxoxide/i
-# pm_action update-source ; pm_action install wget
 function pm_action(){
     # args=$(echo "$*" |grep -v "$1")
     args="${*:2}"
@@ -994,7 +990,6 @@ ip_mix() {
     region=$( echo $result | awk -F '"' '{print $4}' )
     city=$( echo $result | awk -F '"' '{print $6}' )
     citydisplay=$( echo "$city, ")
-    #isp=$( echo $result | awk -F '"' '{print $10}' )
     isp=$( wget --no-check-certificate -t1 -T10 -qO- https://ipapi.co/json | grep \"org\" | awk -F '"' '{print $4}' )
     asn=$(wget --no-check-certificate -t1 -T10 -qO- https://ipapi.co/asn/)
 }
